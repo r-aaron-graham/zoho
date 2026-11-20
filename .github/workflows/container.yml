@@ -18,4 +18,4 @@ jobs:
       - run: crm-normalize
         working-directory: ${{ runner.temp }}
       - run: docker build -t crm-mapping .
-      - run: docker run --rm --read-only --network none crm-mapping python -m unittest -v
+      - run: docker run --rm --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m --network none crm-mapping python -m unittest -v
