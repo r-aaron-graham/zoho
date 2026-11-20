@@ -1,0 +1,12 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+[project]
+name = "crm-contact-mapping-example"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = []
+[project.scripts]
+crm-normalize = "contacts:main"
+[tool.setuptools]
+py-modules = ["contacts"]
