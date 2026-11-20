@@ -1,5 +1,9 @@
 """Map a synthetic CRM contact export into a normalized integration record."""
 import json
+import argparse
+import os
+from pathlib import Path
+import tempfile
 
 
 def normalize_contact(record):
@@ -28,7 +32,34 @@ def normalize_batch(records):
     return contacts
 
 
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, help="JSON array of contact records")
+    parser.add_argument("--output", type=Path, help="Atomically replace this JSON output")
+    args = parser.parse_args()
+    temporary = None
+    try:
+        records = json.loads(args.input.read_text(encoding="utf-8")) if args.input else [
+            {"id": "example-1", "Last_Name": "Example", "Email": "example@example.invalid"}
+        ]
+        payload = json.dumps(normalize_batch(records), indent=2) + "\n"
+        if args.output:
+            with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8",
+                                             dir=args.output.parent, delete=False) as handle:
+                temporary = handle.name
+                handle.write(payload)
+                handle.flush()
+                os.fsync(handle.fileno())
+            os.replace(temporary, args.output)
+            temporary = None
+        else:
+            print(payload, end="")
+    except (ValueError, OSError, RecursionError) as exc:
+        parser.exit(2, f"Contact conversion failed: {exc}\n")
+    finally:
+        if temporary is not None:
+            Path(temporary).unlink(missing_ok=True)
+
+
 if __name__ == "__main__":
-    print(json.dumps(normalize_batch([
-        {"id": "example-1", "Last_Name": "Example", "Email": "example@example.invalid"}
-    ]), indent=2))
+    main()
